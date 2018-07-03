@@ -43,6 +43,7 @@ dependencies {
 
     testCompile 'com.google.code.gson:gson:2.8.2'
     testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile 'org.springframework.security:spring-security-test'
 }
 
 compileJava.dependsOn(processResources)

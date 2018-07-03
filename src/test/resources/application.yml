@@ -2,6 +2,10 @@
 spring:
   resources:
     add-mappings: false
+  security:
+    user:
+      name: user
+      password: password
 
 server:
   port: 9000
@@ -10,3 +14,6 @@ elasticsearch:
   clusterName:
   host: 127.0.0.1
   port: 9999
+  username: ${ELASTICSEARCH_USERNAME:elastic}
+  password: ${ELASTICSEARCH_PASSWORD:changeme}
+  uri: ${ELASTICSEARCH_URI:http://${elasticsearch.host}:${elasticsearch.port}}
