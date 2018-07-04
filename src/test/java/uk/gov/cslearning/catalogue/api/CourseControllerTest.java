@@ -143,14 +143,14 @@ public class CourseControllerTest {
         Page<Course> page = new PageImpl<>(Arrays.asList(course1, course2));
 
         when(courseRepository.findSuggested("department1,department2",
-                "area1,area2", PageRequest.of(0, 10)))
+                "area1,area2", PageRequest.of(2, 2)))
                 .thenReturn(page);
 
         mockMvc.perform(get("/courses/")
                 .param("areaOfWork", "area1", "area2")
                 .param("department", "department1", "department2")
-                .param("page", "0")
-                .param("size", "10")
+                .param("page", "2")
+                .param("size", "2")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.results[0].title", equalTo("Course 1")))
