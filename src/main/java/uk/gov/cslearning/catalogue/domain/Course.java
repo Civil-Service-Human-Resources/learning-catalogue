@@ -8,6 +8,7 @@ import uk.gov.cslearning.catalogue.domain.module.Module;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Collections.unmodifiableList;
 
@@ -90,18 +91,16 @@ public class Course {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (object == this) {
-            return true;
-        }
-        if (object == null) {
-            return false;
-        }
-        if (!(object instanceof Course)) {
-            return false;
-        }
-        Course rhs = (Course) object;
-        return this.id.equals(rhs.id);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Course course = (Course) o;
+        return Objects.equals(id, course.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override

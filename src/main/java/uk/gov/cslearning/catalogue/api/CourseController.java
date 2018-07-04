@@ -31,7 +31,6 @@ public class CourseController {
 
     private CourseRepository courseRepository;
 
-    @Autowired
     private ResourceRepository resourceRepository;
 
     @Autowired
