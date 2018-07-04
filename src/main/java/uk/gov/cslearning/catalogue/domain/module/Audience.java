@@ -87,16 +87,4 @@ public class Audience {
     public void setMandatory(Boolean mandatory) {
         this.mandatory = mandatory;
     }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder()
-                .append(areasOfWork)
-                .append(departments)
-                .append(grades)
-                .append(interests)
-                .append(mandatory)
-                .toHashCode();
-    }
-
 }
