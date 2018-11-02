@@ -2,6 +2,7 @@ package uk.gov.cslearning.catalogue.service;
 
 import org.springframework.stereotype.Service;
 import uk.gov.cslearning.catalogue.domain.Course;
+import uk.gov.cslearning.catalogue.domain.module.LinkModule;
 import uk.gov.cslearning.catalogue.domain.module.Module;
 import uk.gov.cslearning.catalogue.repository.CourseRepository;
 
@@ -42,4 +43,38 @@ public class ModuleService {
                 .filter(m -> m.getId().equals(moduleId))
                 .findFirst();
     }
+
+    public Module update(String courseId, Module newModule) {
+        Course course = courseRepository.findById(courseId).orElseThrow((Supplier<IllegalStateException>) () -> {
+            throw new IllegalStateException(
+                    String.format("Unable to add module. Course does not exist: %s", courseId));
+        });
+
+        List<Module> modules = new ArrayList<>(course.getModules());
+        for(Module module: modules) {
+            if (module.getId().equals(newModule.getId())) {
+                String type = newModule.getModuleType();
+                switch (type) {
+                    case "link":
+                        updateLinkModule((LinkModule) module, (LinkModule) newModule);
+                }
+            }
+        }
+
+        course.setModules(modules);
+        courseRepository.save(course);
+
+        return newModule;
+    }
+
+
+    private void updateLinkModule(LinkModule module, LinkModule newModule) {
+        module.setTitle(newModule.getTitle());
+        module.setDescription(newModule.getDescription());
+        module.setCost(newModule.getCost());
+        module.setDuration(newModule.getDuration());
+        module.setOptional(newModule.isOptional());
+        module.setUrl(newModule.getUrl());
+    }
+
 }

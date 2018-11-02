@@ -73,6 +73,15 @@ public class Course {
         }
     }
 
+    public void deleteModule(Module module) {
+        for (Iterator<Module> it = modules.iterator(); it.hasNext(); ) {
+            Module m = it.next();
+            if (m.getId().equals(module.getId())) {
+                it.remove();
+            }
+        }
+    }
+
     public String getId() {
         return id;
     }
