@@ -11,6 +11,8 @@ import uk.gov.cslearning.catalogue.service.RegistryService;
 
 import java.util.*;
 
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+
 @Service
 public class AudienceService {
     private CourseService courseService;
@@ -112,6 +114,13 @@ public class AudienceService {
             audienceNameComponents.add(interests);
         }
 
-        return String.join(", ", audienceNameComponents);
+        String audienceName = String.join(", ", audienceNameComponents);
+
+        if (audienceName.isEmpty()) {
+            String hash = randomAlphabetic(4).toUpperCase();
+            audienceName = "Temp – " + hash;
+        }
+
+        return audienceName;
     }
 }
