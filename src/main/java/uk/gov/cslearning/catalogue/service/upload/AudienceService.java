@@ -29,6 +29,9 @@ public class AudienceService {
     public Course save(String courseId, Audience audience) {
         Course course = courseService.getCourseById(courseId);
 
+        String generatedAudienceName = generateAudienceName(audience);
+        audience.setName(generatedAudienceName);
+
         Set<Audience> audiences = new HashSet<>(course.getAudiences());
         audiences.add(audience);
         course.setAudiences(audiences);
@@ -37,6 +40,9 @@ public class AudienceService {
     }
 
     public Course updateAudience(Course course, Audience newAudience, Audience audience) {
+        String generatedAudienceName = generateAudienceName(newAudience);
+        newAudience.setName(generatedAudienceName);
+
         Set<Audience> audiences = new HashSet<>(course.getAudiences());
         audiences.remove(audience);
         audiences.add(newAudience);
@@ -90,5 +96,13 @@ public class AudienceService {
             civilServant.getProfessionName().ifPresent(professionName -> audience.setAreasOfWork(new HashSet<>(Arrays.asList(professionName))));
         }
         return audience;
+    }
+
+    private String generateAudienceName(Audience audience) {
+        String organisations = String.join(", ", audience.getDepartments());
+        String areasOfWork = String.join(", ", audience.getAreasOfWork());
+        String interests = String.join(", ", audience.getInterests());
+
+        return organisations + ", " + areasOfWork + ", " + interests;
     }
 }
