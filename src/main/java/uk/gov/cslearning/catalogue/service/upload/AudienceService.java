@@ -9,10 +9,7 @@ import uk.gov.cslearning.catalogue.service.AuthoritiesService;
 import uk.gov.cslearning.catalogue.service.CourseService;
 import uk.gov.cslearning.catalogue.service.RegistryService;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class AudienceService {
@@ -103,6 +100,18 @@ public class AudienceService {
         String areasOfWork = String.join(", ", audience.getAreasOfWork());
         String interests = String.join(", ", audience.getInterests());
 
-        return organisations + ", " + areasOfWork + ", " + interests;
+        ArrayList<String> audienceNameComponents = new ArrayList<>();
+
+        if (!organisations.isEmpty()) {
+            audienceNameComponents.add(organisations);
+        }
+        if (!areasOfWork.isEmpty()) {
+            audienceNameComponents.add(areasOfWork);
+        }
+        if (!interests.isEmpty()) {
+            audienceNameComponents.add(interests);
+        }
+
+        return String.join(", ", audienceNameComponents);
     }
 }
