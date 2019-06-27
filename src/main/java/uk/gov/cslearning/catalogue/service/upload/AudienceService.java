@@ -100,7 +100,11 @@ public class AudienceService {
     private String generateAudienceName(Audience audience) {
         String organisations = String.join(", ", audience.getDepartments());
         String areasOfWork = String.join(", ", audience.getAreasOfWork());
-        String interests = String.join(", ", audience.getInterests());
+
+        ArrayList<String> sortedList = new ArrayList<>(audience.getInterests());
+        Collections.sort(sortedList);
+
+        String interests = String.join(", ", sortedList);
 
         ArrayList<String> audienceNameComponents = new ArrayList<>();
 
