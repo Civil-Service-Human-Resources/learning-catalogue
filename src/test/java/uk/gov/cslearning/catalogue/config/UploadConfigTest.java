@@ -57,13 +57,15 @@ public class UploadConfigTest {
 
     @Test
     public void shouldHaveCorrectFileSubstitutionMap() {
-        Map<String, String> substitutionMap = ImmutableMap.of(
-                "js/player_management/close_methods.js", "/file-substitutions/close_methods.js",
-                "js/player_management/content_tracking/adapters/tincan_wrapper.js", "/file-substitutions/tincan_wrapper.js",
-                "js/player_management/portal_overrides.js", "/file-substitutions/portal_overrides.js",
-                "story_content/user.js", "/file-substitutions/user.js",
-                "SCORMDriver/Configuration.js", "/file-substitutions/Configuration.js"
-        );
+        Map<String, String> substitutionMap = ImmutableMap.<String, String>builder()
+                /* file-to-substitute => substituted-with */
+                .put("js/player_management/close_methods.js", "/file-substitutions/close_methods.js") //GOMO
+                .put("js/player_management/content_tracking/adapters/tincan_wrapper.js", "/file-substitutions/tincan_wrapper.js") //GOMO
+                .put("js/player_management/portal_overrides.js", "/file-substitutions/portal_overrides.js") //GOMO
+                .put("js/corePrimaryLoadList.min.js", "/file-substitutions/corePrimaryLoadList.min.js") //GOMO
+                .put("story_content/user.js", "/file-substitutions/user.js") //Storyline
+                .put("SCORMDriver/Configuration.js", "/file-substitutions/Configuration.js") //DominKNOW
+                .build();
 
         assertEquals(substitutionMap.keySet(), config.fileSubstitutions().keySet());
         substitutionMap.forEach((key, value) -> assertEquals(key, value, config.fileSubstitutions().get(key)));

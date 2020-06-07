@@ -47,14 +47,16 @@ public class UploadConfig {
 
     @Bean("fileSubstitutions")
     public Map<String, String> fileSubstitutions() {
-        return ImmutableMap.of(
+        return ImmutableMap.<String, String>builder()
                 /* file-to-substitute => substituted-with */
-                "js/player_management/close_methods.js", "/file-substitutions/close_methods.js", //GOMO
-                "js/player_management/content_tracking/adapters/tincan_wrapper.js", "/file-substitutions/tincan_wrapper.js", //GOMO
-                "js/player_management/portal_overrides.js", "/file-substitutions/portal_overrides.js", //GOMO
-                "story_content/user.js", "/file-substitutions/user.js", //Storyline
-                "SCORMDriver/Configuration.js", "/file-substitutions/Configuration.js" // DominKNOW
-        );
+                .put("js/player_management/close_methods.js", "/file-substitutions/close_methods.js") //GOMO
+                .put("js/player_management/content_tracking/adapters/tincan_wrapper.js", "/file-substitutions/tincan_wrapper.js") //GOMO
+                .put("js/player_management/portal_overrides.js", "/file-substitutions/portal_overrides.js") //GOMO
+                .put("js/corePrimaryLoadList.min.js", "/file-substitutions/corePrimaryLoadList.min.js") //GOMO
+                .put("story_content/user.js", "/file-substitutions/user.js") //Storyline
+                .put("SCORMDriver/Configuration.js", "/file-substitutions/Configuration.js") //DominKNOW
+                .build();
+                
     }
 
     @Bean("fileProcessorMap")

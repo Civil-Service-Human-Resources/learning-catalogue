@@ -3,26 +3,37 @@
 var CLOSE_METHODS = {
 
     csl: function () {
-        var match = window.location.toString().match(/(https?):\/\/([^-]*)-?cdn\.learn\.civilservice\.gov\.uk\/[^/]+\/([^/]+)\/([^/]+)\/.*$/);
-        if (!match) {
-            throw new Error('Content being accessed on invalid domain');
-        }
+            console.log('close_methods.js: csl close');
+            var url = window.location.toString();
+            var prodMatch = url.match(/(https?):\/\/([^-]*)-?cdn\.learn\.civilservice\.gov\.uk\/[^/]+\/([^/]+)\/([^/]+)\/.*$/);
+            var nonProdMatch = url.match(/(https?):\/\/([^-]*)-?cdn\.cshr\.digital\/[^/]+\/([^/]+)\/([^/]+)\/.*$/);
 
-        var moduleId = getParameterByName('module');
+            if (!prodMatch && !nonProdMatch) {
+                console.log('Content being accessed on invalid domain');
+                throw new Error('Content being accessed on invalid domain');
+            }
 
-        var scheme = match[1];
-        var env = !!match[2] ? match[2] + '-' : '';
-        var host = env + 'learn.' + 'civilservice.gov.uk/';
-        var path = 'learning-record/' + match[3] + '/' + moduleId;
+            var courseId;
+            var host;
+            if (prodMatch) {
+                courseId = prodMatch[3];
+                host = 'learn.civilservice.gov.uk/';
+            } else {
+                courseId = nonProdMatch[3];
+                if (nonProdMatch[2] === 'local') {
+                    host = 'localhost:3001/';
+                } else {
+                    host = nonProdMatch[2] + '-lpg.cshr.digital/';
+                }
+            }
 
-        if (match[2] === 'local') {
-            scheme = 'http';
-            host = 'lpg.local.cshr.digital:3001/';
-        }
+            var scheme = window.location.protocol;
+            var moduleId = getParameterByName('module');
+            var path = 'learning-record/' + courseId + '/' + moduleId;
 
-        window.location = scheme + '://' + host + path;
-        return true;
-    }
+            window.location = scheme + '//' + host + path;
+            return true;
+    	}
 };
 
 

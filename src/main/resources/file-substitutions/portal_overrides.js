@@ -8,21 +8,33 @@ if (OBJ_NAV_BUTTONS && OBJ_NAV_BUTTONS["extra-settings"] && OBJ_NAV_BUTTONS["ext
 if (OBJ_NAV_BUTTONS && OBJ_NAV_BUTTONS["extra-search"] && OBJ_NAV_BUTTONS["extra-search"].booDefaultDisplayButton) OBJ_NAV_BUTTONS["extra-search"].booDefaultDisplayButton = false;
 if (OBJ_NAV_BUTTONS && OBJ_NAV_BUTTONS["extra-jlr-menu"] && OBJ_NAV_BUTTONS["extra-jlr-menu"].booDefaultDisplayButton) OBJ_NAV_BUTTONS["extra-jlr-menu"].booDefaultDisplayButton = false;
 
-var match = window.location.toString().match(/(https?):\/\/([^-]*)-?cdn\.learn\.civilservice\.gov\.uk\/[^/]+\/([^/]+)\/([^/]+)\/.*$/);
-if (!match) {
+console.log('portal_overrides.js');
+var url = window.location.toString();
+var prodMatch = url.match(/(https?):\/\/([^-]*)-?cdn\.learn\.civilservice\.gov\.uk\/[^/]+\/([^/]+)\/([^/]+)\/.*$/);
+var nonProdMatch = url.match(/(https?):\/\/([^-]*)-?cdn\.cshr\.digital\/[^/]+\/([^/]+)\/([^/]+)\/.*$/);
+
+if (!prodMatch && !nonProdMatch) {
+    console.log('Content being accessed on invalid domain');
     throw new Error('Content being accessed on invalid domain');
 }
-var moduleId = getParameterByName('module');
 
-var scheme = match[1];
-var env = !!match[2] ? match[2] + '-' : '';
-var host = env + 'learn.' + 'civilservice.gov.uk/';
-var path = 'learning-record/' + match[3] + '/' + moduleId + '/xapi';
-
-if (match[2] === 'local') {
-    scheme = 'http';
-    host = 'lpg.local.cshr.digital:3001/';
+var courseId;
+var host;
+if (prodMatch) {
+    courseId = prodMatch[3];
+    host = 'learn.civilservice.gov.uk/';
+} else {
+    courseId = nonProdMatch[3];
+    if (nonProdMatch[2] === 'local') {
+        host = 'localhost:3001/';
+    } else {
+        host = nonProdMatch[2] + '-lpg.cshr.digital/';
+    }
 }
+
+var scheme = window.location.protocol;
+var moduleId = getParameterByName('module');
+var path = 'learning-record/' + courseId + '/' + moduleId + '/xapi';
 
 BOO_INCLUDE_EXIT_ON_NAV = false;
 BOO_INCLUDE_ACCESSIBLE_ON_NAV = false;
@@ -35,7 +47,7 @@ var CONTENT_TRACKING_CONFIG = {
         {
             adapter: 'tincan',
             version: '1.0',
-            endpoint: scheme + '://' + host + path
+            endpoint: scheme + '//' + host + path
         }
     ]
 }
