@@ -17,6 +17,7 @@ import uk.gov.cslearning.catalogue.config.RequestMappingConfig;
 import uk.gov.cslearning.catalogue.dto.CourseDto;
 import uk.gov.cslearning.catalogue.dto.EventDto;
 import uk.gov.cslearning.catalogue.dto.ModuleDto;
+import uk.gov.cslearning.catalogue.service.CourseService;
 import uk.gov.cslearning.catalogue.service.EventService;
 import uk.gov.cslearning.catalogue.service.ModuleService;
 
@@ -42,6 +43,9 @@ public class ReportControllerTest {
 
     @MockBean
     private ModuleService moduleService;
+
+    @MockBean
+    private CourseService courseService;
 
     @Test
     @WithMockUser(username = "user")
@@ -110,4 +114,28 @@ public class ReportControllerTest {
                 .andExpect(jsonPath("$.module_id.course.title", equalTo(courseTitle)));
     }
 
+    @Test
+    public void shouldReturnPublishedAndArchivedMandatoryCourses() throws Exception {
+
+        String courseId = "course-id";
+        String courseTitle = "course-title";
+        String courseTopicId = "topic-id";
+
+        CourseDto courseDto = new CourseDto();
+        courseDto.setId(courseId);
+        courseDto.setTitle(courseTitle);
+        courseDto.setTopicId("topic-id");
+
+        Map<String, CourseDto> courseDtoMap = ImmutableMap.of(courseId, courseDto);
+
+        when(courseService.getPublishedAndArchivedMandatoryCourses()).thenReturn(courseDtoMap);
+
+        mockMvc.perform(
+                get("/reporting/mandatory-courses")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.course-id.id", equalTo(courseId)))
+                .andExpect(jsonPath("$.course-id.title", equalTo(courseTitle)))
+                .andExpect(jsonPath("$.course-id.topicId", equalTo(courseTopicId)));
+    }
 }

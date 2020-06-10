@@ -16,7 +16,10 @@ import uk.gov.cslearning.catalogue.domain.*;
 import uk.gov.cslearning.catalogue.domain.Owner.Owner;
 import uk.gov.cslearning.catalogue.domain.Owner.OwnerFactory;
 import uk.gov.cslearning.catalogue.domain.module.*;
+import uk.gov.cslearning.catalogue.dto.CourseDto;
+import uk.gov.cslearning.catalogue.dto.factory.CourseDtoFactory;
 import uk.gov.cslearning.catalogue.repository.CourseRepository;
+import uk.gov.cslearning.catalogue.repository.CourseRepositoryImpl;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,6 +27,7 @@ import java.time.Instant;
 import java.util.*;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -41,7 +45,13 @@ public class CourseServiceTest {
     private CourseRepository courseRepository;
 
     @Mock
+    private CourseRepositoryImpl courseRepositoryImpl;
+
+    @Mock
     private EventService eventService;
+
+    @Mock
+    private CourseDtoFactory courseDtoFactory;
 
     @Mock
     private RegistryService registryService;
@@ -352,5 +362,25 @@ public class CourseServiceTest {
         when(requiredByService.isAudienceRequiredWithinRange(any(Audience.class), any(Instant.class), any(long.class), any(long.class))).thenReturn(false);
 
         assertFalse(courseService.isCourseRequiredWithinRangeForOrg(course, codeList, 1L, 7L));
+    }
+
+    @Test
+    public void shouldGetPublishedAndArchivedMandatoryCourses() {
+        List<Course> courses = new ArrayList<>();
+        Course course  = new Course();
+        course.setId("courseId");
+        course.setTitle("courseTitle");
+        courses.add(course);
+        List<Course> coursePage = new ArrayList<>(courses);
+
+        CourseDto dto = new CourseDto();
+        dto.setId("courseDtoId");
+        dto.setTitle("courseDtoTitle"); ;
+
+        when(courseRepositoryImpl.findPublishedAndArchivedMandatoryCourses()).thenReturn(coursePage);
+        when(courseDtoFactory.create(courses.get(0))).thenReturn(dto);
+        Map<String, CourseDto> courseDtoMap = courseService.getPublishedAndArchivedMandatoryCourses();
+
+        assertEquals(dto.getTitle(), courseDtoMap.get("courseId").getTitle());
     }
 }
