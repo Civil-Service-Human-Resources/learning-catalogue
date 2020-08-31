@@ -1,5 +1,47 @@
 package uk.gov.cslearning.catalogue.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import uk.gov.cslearning.catalogue.domain.CivilServant.CivilServant;
+import uk.gov.cslearning.catalogue.domain.CivilServant.OrganisationalUnit;
+import uk.gov.cslearning.catalogue.domain.CivilServant.Profession;
+import uk.gov.cslearning.catalogue.domain.Course;
+import uk.gov.cslearning.catalogue.domain.LearningProvider;
+import uk.gov.cslearning.catalogue.domain.Owner.Owner;
+import uk.gov.cslearning.catalogue.domain.Owner.OwnerFactory;
+import uk.gov.cslearning.catalogue.domain.Scope;
+import uk.gov.cslearning.catalogue.domain.Status;
+import uk.gov.cslearning.catalogue.domain.Visibility;
+import uk.gov.cslearning.catalogue.domain.module.Audience;
+import uk.gov.cslearning.catalogue.domain.module.Event;
+import uk.gov.cslearning.catalogue.domain.module.EventStatus;
+import uk.gov.cslearning.catalogue.domain.module.FaceToFaceModule;
+import uk.gov.cslearning.catalogue.domain.module.LinkModule;
+import uk.gov.cslearning.catalogue.domain.module.Module;
+import uk.gov.cslearning.catalogue.repository.CourseRepository;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -9,33 +51,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
-import uk.gov.cslearning.catalogue.domain.CivilServant.CivilServant;
-import uk.gov.cslearning.catalogue.domain.CivilServant.OrganisationalUnit;
-import uk.gov.cslearning.catalogue.domain.CivilServant.Profession;
-import uk.gov.cslearning.catalogue.domain.*;
-import uk.gov.cslearning.catalogue.domain.Owner.Owner;
-import uk.gov.cslearning.catalogue.domain.Owner.OwnerFactory;
-import uk.gov.cslearning.catalogue.domain.module.*;
-import uk.gov.cslearning.catalogue.repository.CourseRepository;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.time.Instant;
-import java.util.*;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.google.common.collect.ImmutableList;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CourseServiceTest {
-
-    private static final String COURSE_ID = "courseId";
+    private static final String COURSE_ID_1 = "courseId-1";
+    private static final String COURSE_ID_2 = "courseId-2";
+    private static final String COURSE_ID_3 = "courseId-3";
+    private static final String COURSE_ID_4 = "courseId-4";
     private static final String ORGANISATIONAL_UNIT_CODE = "code";
     private static final PageRequest PAGEABLE = PageRequest.of(0, 10);
     private static final Long PROFESSION_ID = 1L;
     private static final Scope SCOPE = Scope.GLOBAL;
     private static final String LEARNING_PROVIDER_ID = "UUID";
+    private static final String TEST_DEPARTMENT_1 = "test-department-1";
 
     @Mock
     private CourseRepository courseRepository;
@@ -74,10 +104,10 @@ public class CourseServiceTest {
 
     @Test
     public void shouldFindByIdShouldNotCallEventsAvail() {
-        when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.empty());
+        when(courseRepository.findById(COURSE_ID_1)).thenReturn(Optional.empty());
 
         verify(eventService, times(0)).getEventAvailability(any());
-        assertEquals(courseService.findById(COURSE_ID), Optional.empty());
+        assertEquals(courseService.findById(COURSE_ID_1), Optional.empty());
     }
 
     @Test
@@ -94,13 +124,13 @@ public class CourseServiceTest {
         modules.add(module);
         course.setModules(modules);
 
-        when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
+        when(courseRepository.findById(COURSE_ID_1)).thenReturn(Optional.of(course));
         when(eventService.getEventAvailability(event)).thenReturn(event);
         when(eventService.getStatus(event.getId())).thenReturn(EventStatus.ACTIVE);
 
-        assertEquals(courseService.findById(COURSE_ID), Optional.of(course));
+        assertEquals(courseService.findById(COURSE_ID_1), Optional.of(course));
 
-        verify(courseRepository).findById(COURSE_ID);
+        verify(courseRepository).findById(COURSE_ID_1);
         verify(eventService).getEventAvailability(event);
         verify(eventService).getStatus(event.getId());
     }
@@ -118,9 +148,9 @@ public class CourseServiceTest {
 
     @Test(expected = IllegalStateException.class)
     public void shouldThrowExceptionIfCourseDoesntExist() {
-        when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.empty());
+        when(courseRepository.findById(COURSE_ID_1)).thenReturn(Optional.empty());
 
-        courseService.getCourseById(COURSE_ID);
+        courseService.getCourseById(COURSE_ID_1);
     }
 
     @Test
@@ -352,5 +382,68 @@ public class CourseServiceTest {
         when(requiredByService.isAudienceRequiredWithinRange(any(Audience.class), any(Instant.class), any(long.class), any(long.class))).thenReturn(false);
 
         assertFalse(courseService.isCourseRequiredWithinRangeForOrg(course, codeList, 1L, 7L));
+    }
+
+    @Test
+    public void shouldFilterCoursesByAudiencesAndRequiredBy() {
+        List<Course> courses = new ArrayList<>();
+        Instant oneDay = prepareInstantWithDayDifference(1);
+
+        Course course1 = new Course();
+        course1.setId(COURSE_ID_1);
+        course1.setAudiences(prepareAudiences(TEST_DEPARTMENT_1, oneDay));
+        courses.add(course1);
+
+        Instant sevenDays = prepareInstantWithDayDifference(7);
+
+        Course course2 = new Course();
+        course2.setId(COURSE_ID_2);
+        course2.setAudiences(prepareAudiences(TEST_DEPARTMENT_1, sevenDays));
+        courses.add(course2);
+
+        Instant thirtyDays = prepareInstantWithDayDifference(30);
+
+        Course course3 = new Course();
+        course3.setId(COURSE_ID_3);
+        course3.setAudiences(prepareAudiences(TEST_DEPARTMENT_1, thirtyDays));
+        courses.add(course3);
+
+        Instant twoDays = prepareInstantWithDayDifference(2);
+
+        Course course4 = new Course();
+        course4.setId(COURSE_ID_4);
+        course4.setAudiences(prepareAudiences(TEST_DEPARTMENT_1, twoDays));
+        courses.add(course4);
+
+        when(courseRepository.findAllRequiredLearning(eq(Status.PUBLISHED.getValue()))).thenReturn(courses);
+
+        List<Course> mandatoryCourses = courseService.fetchMandatoryCoursesByDueDate(Status.PUBLISHED.getValue(),
+            ImmutableList.of(1L, 7L, 30L));
+
+        assertEquals(mandatoryCourses.size(), 3);
+        assertTrue(mandatoryCourses.contains(course1));
+        assertTrue(mandatoryCourses.contains(course2));
+        assertTrue(mandatoryCourses.contains(course3));
+    }
+
+    private Set<Audience> prepareAudiences(String departmentName, Instant requiredBy) {
+        Set<String> departments = new HashSet<>();
+        departments.add(departmentName);
+
+        Audience audience = new Audience();
+        audience.setDepartments(departments);
+        audience.setRequiredBy(requiredBy);
+
+        Set<Audience> notRequiredAudiences = new HashSet<>();
+        notRequiredAudiences.add(audience);
+
+        return notRequiredAudiences;
+    }
+
+    private Instant prepareInstantWithDayDifference(int days) {
+        return LocalDate.now()
+            .plusDays(days)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant();
     }
 }

@@ -1,9 +1,22 @@
 package uk.gov.cslearning.catalogue.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Service;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 import uk.gov.cslearning.catalogue.domain.CivilServant.CivilServant;
 import uk.gov.cslearning.catalogue.domain.CivilServant.OrganisationalUnit;
 import uk.gov.cslearning.catalogue.domain.Course;
@@ -12,10 +25,11 @@ import uk.gov.cslearning.catalogue.domain.module.Audience;
 import uk.gov.cslearning.catalogue.domain.module.FaceToFaceModule;
 import uk.gov.cslearning.catalogue.repository.CourseRepository;
 
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
 
 @Service
 public class CourseService {
@@ -148,5 +162,68 @@ public class CourseService {
         return orgAudiences
                 .stream()
                 .anyMatch(audience -> requiredByService.isAudienceRequiredWithinRange(audience, Instant.now(), from, to));
+    }
+
+    public List<Course> fetchMandatoryCoursesByDueDate(String status, Collection<Long> days) { ;
+        Set<Course> mandatoryCoursesWithValidAudience = new HashSet<>();
+        LocalDate now = LocalDate.now();
+
+        courseRepository.findAllRequiredLearning(status)
+            .forEach(course -> course.getAudiences()
+                .forEach(audience -> addCourseIfAudienceIsRequired(course, audience, mandatoryCoursesWithValidAudience, days, now)));
+
+        return new ArrayList(mandatoryCoursesWithValidAudience);
+    }
+
+    public Page<Course> prepareCoursePage(Pageable pageable, List<Course> courses) {
+        Set<String> courseSet = new HashSet<>();
+        List<Course> filteredCourses = courses.stream()
+            .filter(course -> courseSet.add(course.getId()))
+            .collect(Collectors.toList());
+
+        return new PageImpl<>(filteredCourses, pageable, courses.size());
+    }
+
+    public Map<String, List<Course>> groupByOrganisationCode(List<Course> courses) {
+        Map<String, List<Course>> groupedCourses = new HashMap<>();
+
+        for (Course course : courses) {
+            for (Audience audience : course.getAudiences()) {
+                addToGroupedCourses(courses, groupedCourses, audience);
+            }
+        }
+
+        return groupedCourses;
+    }
+
+    private void addToGroupedCourses(List<Course> courses, Map<String, List<Course>> groupedCourses, Audience audience) {
+        for (String department : audience.getDepartments()) {
+            if (!groupedCourses.containsKey(department)) {
+                groupedCourses.putIfAbsent(department, new ArrayList<>(courses));
+            } else {
+                groupedCourses.get(department)
+                    .addAll(courses);
+            }
+        }
+    }
+
+    private void addCourseIfAudienceIsRequired(Course course,
+            Audience audience,
+            Set<Course> mandatoryCoursesWithValidAudience,
+            Collection<Long> days,
+            LocalDate now) {
+        if (isAudienceRequired(audience, days, now)) {
+            mandatoryCoursesWithValidAudience.add(course);
+        }
+    }
+
+    private boolean isAudienceRequired(Audience audience, Collection<Long> days, LocalDate now) {
+        return audience.getRequiredBy() != null
+            && audience.getDepartments() != null
+            && isRequiredDateDue(LocalDateTime.ofInstant(audience.getRequiredBy(), ZoneId.systemDefault()).toLocalDate(), days, now);
+    }
+
+    private boolean isRequiredDateDue(LocalDate requiredBy, Collection<Long> days, LocalDate now) {
+        return days.contains(ChronoUnit.DAYS.between(now, requiredBy));
     }
 }

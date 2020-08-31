@@ -20,6 +20,7 @@ import uk.gov.cslearning.catalogue.domain.module.Audience;
 import uk.gov.cslearning.catalogue.domain.module.Event;
 import uk.gov.cslearning.catalogue.domain.module.FaceToFaceModule;
 import uk.gov.cslearning.catalogue.domain.module.Module;
+import uk.gov.cslearning.catalogue.mapping.DaysMapper;
 import uk.gov.cslearning.catalogue.mapping.RoleMapping;
 import uk.gov.cslearning.catalogue.repository.CourseRepository;
 import uk.gov.cslearning.catalogue.service.CourseService;
@@ -138,6 +139,15 @@ public class CourseController {
         Page<Course> page = new PageImpl<>(filteredCourses, pageable, courses.size());
 
         return ResponseEntity.ok(new PageResults<>(page, pageable));
+    }
+
+    @GetMapping(params = {"mandatory", "days"})
+    public ResponseEntity<Map<String, List<Course>>> listMandatoryByDueDays(@RequestParam(value = "status", defaultValue = "Published") String status,
+        @RequestParam(value = "days", defaultValue = "1") String days) {
+        LOGGER.debug("Listing mandatory courses");
+        List<Course> courses = courseService.fetchMandatoryCoursesByDueDate(status, DaysMapper.convertDaysFromTextToNumeric(days));
+
+        return ResponseEntity.ok(courseService.groupByOrganisationCode(courses));
     }
 
     @GetMapping(value = "/required")

@@ -315,6 +315,27 @@ public class CourseControllerTest {
     }
 
     @Test
+    public void shouldListMandatoryCoursesByDays() throws Exception {
+        String department = "department1";
+        String days = "1,7,30";
+
+        Course course = new Course();
+        List<Course> courses = new ArrayList<>(Collections.singletonList(course));
+
+        when(courseService.fetchMandatoryCoursesByDueDate(any(String.class), any(Collection.class)))
+            .thenReturn(new ArrayList<>(Collections.singletonList(course)));
+        when(courseService.getOrganisationParents(eq(department))).thenReturn(new ArrayList<>(Collections.singletonList(department)));
+        when(courseService.groupByOrganisationCode(any(List.class))).thenReturn(ImmutableMap.of(department, courses));
+        mockMvc.perform(
+            get("/courses/")
+                .param("mandatory", "true")
+                .param("days", days)
+                .with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.department1[0].id", equalTo(course.getId())));
+    }
+
+    @Test
     public void shouldListMandatoryCoursesWithMultipleParameters() throws Exception {
         String department = "department1,department2";
         String status = "Draft,Published";
