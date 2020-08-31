@@ -90,19 +90,6 @@ public class CourseService {
                 });
     }
 
-    private Course getCourseEventsAvailability(Course course) {
-        course.getModules().forEach(module -> {
-            if (module instanceof FaceToFaceModule) {
-                ((FaceToFaceModule) module).getEvents().forEach(event -> {
-                    eventService.getEventAvailability(event);
-                    event.setStatus(eventService.getStatus(event.getId()));
-                });
-            }
-        });
-
-        return course;
-    }
-
     public Page<Course> findCoursesByOrganisationalUnit(String organisationalUnitCode, Pageable pageable) {
         return courseRepository.findAllByOrganisationCode(organisationalUnitCode, pageable);
     }
@@ -148,5 +135,38 @@ public class CourseService {
         return orgAudiences
                 .stream()
                 .anyMatch(audience -> requiredByService.isAudienceRequiredWithinRange(audience, Instant.now(), from, to));
+    }
+
+    public List<Course> fetchMandatoryCourses(String status, String department, Pageable pageable) { ;
+        Set<Course> mandatoryCoursesWithValidAudience = new HashSet<>();
+
+        courseRepository.findAllRequiredLearning(status, pageable)
+            .forEach(course -> course.getAudiences()
+                .forEach(audience -> addCourseIfAudienceIsRequired(course, audience, department, mandatoryCoursesWithValidAudience)));
+
+        return new ArrayList(mandatoryCoursesWithValidAudience);
+    }
+
+    private void addCourseIfAudienceIsRequired(Course course, Audience audience, String department, Set<Course> mandatoryCoursesWithValidAudience) {
+        if (isAudienceRequired(audience, department)) {
+            mandatoryCoursesWithValidAudience.add(course);
+        }
+    }
+
+    private boolean isAudienceRequired(Audience audience, String department) {
+        return audience.getRequiredBy() != null && audience.getDepartments() != null && audience.getDepartments().contains(department);
+    }
+
+    private Course getCourseEventsAvailability(Course course) {
+        course.getModules().forEach(module -> {
+            if (module instanceof FaceToFaceModule) {
+                ((FaceToFaceModule) module).getEvents().forEach(event -> {
+                    eventService.getEventAvailability(event);
+                    event.setStatus(eventService.getStatus(event.getId()));
+                });
+            }
+        });
+
+        return course;
     }
 }

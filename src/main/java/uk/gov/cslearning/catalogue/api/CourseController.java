@@ -126,8 +126,8 @@ public class CourseController {
         List<String> organisationParents = courseService.getOrganisationParents(department);
 
         List<Course> courses = new ArrayList<>();
-        for (String d : organisationParents) {
-            courses.addAll(courseRepository.findMandatory(d, status, pageable));
+        for (String parent : organisationParents) {
+            courses.addAll(courseService.fetchMandatoryCourses(status, parent, pageable));
         }
 
         Set<String> courseSet = new HashSet<>();
