@@ -26,6 +26,21 @@ public class CivilServant {
         return Optional.ofNullable(this.organisationalUnit);
     }
 
+    public List<Interest> getInterests() {
+        return interests;
+    }
+
+    public List<Profession> getOtherAreasOfWork() {
+        return otherAreasOfWork;
+    }
+    public Optional<String> getFullName() {
+        return Optional.ofNullable(this.fullName);
+    }
+
+    public Optional<Grade> getGrade() {
+        return Optional.ofNullable(this.grade);
+    }
+
     public Optional<Profession> getProfession() {
         return Optional.ofNullable(this.profession);
     }
@@ -36,6 +51,10 @@ public class CivilServant {
 
     public Optional<String> getOrganisationalUnitCode() {
         return getOrganisationalUnit().map(OrganisationalUnit::getCode);
+    }
+
+    public Optional<String>getGradeCode() {
+        return getGrade().map(Grade::getCode);
     }
 
     public Optional<Long> getProfessionId() {

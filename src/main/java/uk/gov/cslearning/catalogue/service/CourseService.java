@@ -11,6 +11,7 @@ import uk.gov.cslearning.catalogue.domain.Owner.OwnerFactory;
 import uk.gov.cslearning.catalogue.domain.module.Audience;
 import uk.gov.cslearning.catalogue.domain.module.FaceToFaceModule;
 import uk.gov.cslearning.catalogue.repository.CourseRepository;
+import uk.gov.cslearning.catalogue.repository.CourseRequiredRepository;
 
 import java.time.Instant;
 import java.util.*;
@@ -32,13 +33,16 @@ public class CourseService {
 
     private RequiredByService requiredByService;
 
-    public CourseService(CourseRepository courseRepository, EventService eventService, RegistryService registryService, OwnerFactory ownerFactory, AuthoritiesService authoritiesService, RequiredByService requiredByService) {
+    private final CourseRequiredRepository courseRequiredRepository;
+
+    public CourseService(CourseRepository courseRepository, EventService eventService, RegistryService registryService, OwnerFactory ownerFactory, AuthoritiesService authoritiesService, RequiredByService requiredByService, CourseRequiredRepository courseRequiredRepository) {
         this.courseRepository = courseRepository;
         this.eventService = eventService;
         this.registryService = registryService;
         this.ownerFactory = ownerFactory;
         this.authoritiesService = authoritiesService;
         this.requiredByService = requiredByService;
+        this.courseRequiredRepository = courseRequiredRepository;
     }
 
     public Course save(Course course) {
@@ -133,6 +137,11 @@ public class CourseService {
             });
         }
         return list;
+    }
+
+    public Page<Course> getRequiredCourses(String profession, String gradeCode, List<String>departments, List<String>otherAreasOfWork,  List<String>interests, String courseStatus,  Pageable pageable)
+    {
+         return courseRequiredRepository.findRequired(profession, gradeCode, departments, otherAreasOfWork, interests, courseStatus, pageable);
     }
 
     public Map<String, List<String>> getOrganisationParentsMap() {

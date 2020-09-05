@@ -11,32 +11,36 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.stereotype.Repository;
 import uk.gov.cslearning.catalogue.domain.Course;
+
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 
 @Repository
-public class CourseSuggestionsRepositoryImpl implements CourseSuggestionsRepository {
+public class CourseRequiredRepositoryImpl implements CourseRequiredRepository {
     private ElasticsearchOperations operations;
 
-    public CourseSuggestionsRepositoryImpl(ElasticsearchOperations operations) {
+    public CourseRequiredRepositoryImpl(ElasticsearchOperations operations) {
         checkArgument(operations != null);
         this.operations = operations;
     }
 
     @Override
-    public Page<Course> findSuggested(List<String> departmentList, String areaOfWork, String interest, String status, String grade, Pageable pageable) {
+    public Page<Course> findRequired(String profession, String gradeCode, List<String>departments, List<String>otherAreasOfWork,  List<String>interests, String courseStatus,  Pageable pageable){
+
         BoolQueryBuilder boolQuery = boolQuery();
 
-        departmentList.forEach(s -> boolQuery.should(QueryBuilders.matchQuery("audiences.departments.keyword", s)));
-        boolQuery.should(QueryBuilders.matchQuery("audiences.areasOfWork.keyword", areaOfWork));
-        boolQuery.should(QueryBuilders.matchQuery("audiences.interests.keyword", interest));
+        departments.forEach(s -> boolQuery.should(QueryBuilders.matchQuery("audiences.departments.keyword", s)));
+        otherAreasOfWork.forEach(o -> boolQuery.should(QueryBuilders.matchQuery("audiences.areasOfWork.keyword", o)));
+        interests.forEach(i -> boolQuery.should(QueryBuilders.matchQuery("audiences.interests.keyword", i)));
+        boolQuery.should(QueryBuilders.matchQuery("audiences.areasOfWork.keyword", profession));
+        boolQuery.should(QueryBuilders.matchQuery("audiences.grades.keyword", gradeCode));
 
         BoolQueryBuilder filterQuery = boolQuery();
-        filterQuery.must(QueryBuilders.matchQuery("audiences.grades.keyword", grade));
-        filterQuery.must(QueryBuilders.matchQuery("status", status));
-        filterQuery.must(QueryBuilders.matchQuery("audiences.type", "OPEN"));
+
+        filterQuery.must(QueryBuilders.matchQuery("status", courseStatus));
+        filterQuery.must(QueryBuilders.matchQuery("audiences.type", "REQUIRED_LEARNING"));
 
         SearchQuery searchQuery = new NativeSearchQueryBuilder()
                 .withQuery(boolQuery)
@@ -48,3 +52,4 @@ public class CourseSuggestionsRepositoryImpl implements CourseSuggestionsReposit
         return operations.queryForPage(searchQuery, Course.class);
     }
 }
+
