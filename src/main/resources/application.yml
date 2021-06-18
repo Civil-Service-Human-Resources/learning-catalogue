@@ -29,7 +29,7 @@ elasticsearch:
 azure:
   account:
     name: ${AZURE_ACCOUNT_NAME:lpgdev}
-    key: ${AZURE_ACCOUNT_KEY:changeme}
+    key: ${AZURE_ACCOUNT_KEY:wkno2sR9Rw7iaNswuW5eeAoQpWrMHrG/f/k2mRMM+ug8kV/AyNdpONPImm7CVBvdkO87r7b3eKlFdpkv5tyh1w==}
   storage:
     container: ${AZURE_STORAGE_CONTAINER:lpgdevcontent}
     connection-string: "DefaultEndpointsProtocol=https;AccountName=${azure.account.name};AccountKey=${azure.account.key}"
@@ -63,7 +63,7 @@ oauth:
   maxTotalConnections: 200
   defaultMaxConnectionsPerRoute: 100
   maxPerServiceUrl: 100
-  jwtKey: ${jwt_key}
+  jwtKey: ${jwt_key:dummy}
 
 retention:
   timeInDays: ${RETENTION_TIME_IN_DAYS:90}
